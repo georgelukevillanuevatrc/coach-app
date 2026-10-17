@@ -34,7 +34,7 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: { initial?: Prof
   const [goal, setGoal] = useState<GoalType>(initial?.goal_type ?? 'lose')
   const [pace, setPace] = useState<number>(initial?.goal_pace ?? 0.15)
   const [activity, setActivity] = useState<ActivityLevel>(initial?.activity_level ?? 'light')
-  const [days, setDays] = useState<2 | 3 | 4 | 5>(initial?.training_days ?? 3)
+  const [days, setDays] = useState<2 | 3 | 4 | 5 | 6>(initial?.training_days ?? 3)
   const [equipment, setEquipment] = useState<Equipment>(initial?.equipment ?? 'gym')
   const [experience, setExperience] = useState<Experience>(initial?.experience ?? 'beginner')
   const [limits, setLimits] = useState(initial?.limits_note ?? '')
@@ -61,7 +61,7 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: { initial?: Prof
     setError(''); setBusy(true)
     try {
       await onSubmit({ id: 1, age: a, sex, height_cm: h, weight_kg: w, activity_level: activity, goal_type: goal, goal_weight_kg: gw,
-        goal_pace: goal === 'maintain' ? 0 : pace, training_days: days, equipment, experience, limits_note: limits.trim() })
+        goal_pace: goal === 'maintain' ? 0 : pace, training_days: days, equipment, experience, limits_note: limits.trim(), split_type: initial?.split_type })
     } finally { setBusy(false) }
   }
 
@@ -81,7 +81,7 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: { initial?: Prof
       <Sel id="activity" text="Daily activity (outside workouts)" value={activity} onChange={setActivity}
         options={[['sedentary', 'Mostly sitting'], ['light', 'Light (walking, 1-3 workouts)'], ['moderate', 'Moderate (3-5 workouts)'], ['very_active', 'Very active (6-7 workouts or physical job)']]} />
       <div className="grid grid-cols-2 gap-3">
-        <Sel id="days" text="Training days / week" value={days} onChange={setDays} options={[[2, '2'], [3, '3'], [4, '4'], [5, '5']]} />
+        <Sel id="days" text="Training days / week" value={days} onChange={setDays} options={[[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']]} />
         <Sel id="exp" text="Experience" value={experience} onChange={setExperience} options={[['beginner', 'Beginner'], ['intermediate', 'Intermediate']]} />
       </div>
       <Sel id="equip" text="Equipment" value={equipment} onChange={setEquipment} options={[['gym', 'Gym'], ['home', 'Home'], ['dumbbells', 'Dumbbells only']]} />

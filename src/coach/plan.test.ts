@@ -68,3 +68,22 @@ describe('generatePlan', () => {
   })
   it('no flags without a note', () => expect(generatePlan(profile(), lib).flags).toEqual([]))
 })
+
+import { SPLITS, daysForSplit, splitInfo } from './plan'
+describe('split types', () => {
+  it('every split builds days that each contain exercises', () => {
+    const profile = { id: 1, age: 30, sex: 'male', height_cm: 175, weight_kg: 75, activity_level: 'moderate', goal_type: 'gain', goal_weight_kg: 80, goal_pace: 0.07, training_days: 3, equipment: 'gym', experience: 'intermediate', limits_note: '' } as const
+    for (const sp of SPLITS) {
+      const days = daysForSplit(sp.id, 3)
+      const g = generatePlan({ ...profile, split_type: sp.id, training_days: days as 3 }, lib)
+      expect(g.days.length).toBe(sp.build(days).length)
+      for (const d of g.days) expect(d.exercises.length).toBeGreaterThan(2)
+    }
+  })
+  it('switching split picks a valid day count', () => {
+    expect(daysForSplit('bro', 3)).toBe(5)
+    expect(daysForSplit('ppl', 6)).toBe(6)
+    expect(daysForSplit('auto', 4)).toBe(4)
+    expect(splitInfo(undefined).id).toBe('auto')
+  })
+})

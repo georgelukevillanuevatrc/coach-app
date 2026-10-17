@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ArrowDown, ArrowUp, ChevronLeft, Plus, RefreshCw, Trash2, TriangleAlert } from 'lucide-react'
 import { db } from '../../lib/db'
-import { PRO_ADVICE, equipmentAllows } from '../../coach/plan'
+import { PRO_ADVICE, SPLITS, daysForSplit, equipmentAllows, splitInfo } from '../../coach/plan'
+import type { SplitType } from '../../lib/types'
 import { ExerciseList } from './Picker'
 import { Sheet, Stepper, btnGhost, card } from './ui'
 import { createPlan, type Day, type TrainData } from './data'
@@ -13,6 +14,8 @@ export default function PlanTab({ data }: { data: TrainData }) {
   const [editId, setEditId] = useState<number | null>(null)
   const [pick, setPick] = useState<null | { idx: number | 'add' }>(null)
   const [confirm, setConfirm] = useState(false)
+  const [splitOpen, setSplitOpen] = useState(false)
+  const [chosen, setChosen] = useState<SplitType | null>(null)
   const day = days.find((d) => d.id === editId)
   const exName = (id: number) => exercises.find((e) => e.id === id)?.name ?? 'Exercise'
   const note = profile?.limits_note ?? ''
@@ -36,8 +39,21 @@ export default function PlanTab({ data }: { data: TrainData }) {
   const cur = pick && pick.idx !== 'add' ? day?.exercises[pick.idx] : undefined
   const curEx = cur && exercises.find((e) => e.id === cur.exercise_id)
 
+  const applySplit = async (id: SplitType) => {
+    if (!profile) return
+    const p = { ...profile, split_type: id, training_days: daysForSplit(id, profile.training_days) as typeof profile.training_days }
+    await db.profile.put(p)
+    await createPlan(p)
+    setChosen(null); setSplitOpen(false)
+  }
+  const cs = splitInfo(profile?.split_type)
+
   return (
     <div className="space-y-3">
+      <button onClick={() => setSplitOpen(true)} className={`${card} flex w-full items-center justify-between gap-3 p-4 text-left`}>
+        <span><span className="block text-xs text-muted">Split type</span><span className="block text-lg font-semibold">{cs.label}</span><span className="block text-sm text-muted">{days.length} days a week</span></span>
+        <span className="text-accent">Change</span>
+      </button>
       {flags.length > 0 && (
         <div className="flex gap-3 rounded-2xl bg-fat/15 p-4 text-sm">
           <TriangleAlert size={20} className="mt-0.5 shrink-0 text-fat" />
@@ -70,6 +86,27 @@ export default function PlanTab({ data }: { data: TrainData }) {
         </div>
       ))}
       <button onClick={() => setConfirm(true)} className={`${btnGhost} flex w-full items-center justify-center gap-2`}><RefreshCw size={16} />Regenerate plan from profile</button>
+
+      <Sheet open={splitOpen} onClose={() => { setSplitOpen(false); setChosen(null) }} title={chosen ? 'Switch split?' : 'Choose a split'}>
+        {!chosen ? (
+          <div className="space-y-2">
+            {SPLITS.map((sp) => (
+              <button key={sp.id} onClick={() => setChosen(sp.id)} className={`w-full rounded-xl border p-3 text-left ${sp.id === cs.id ? 'border-accent' : 'border-line'}`}>
+                <span className="flex items-center justify-between"><b>{sp.label}</b><span className="text-xs text-muted">{sp.id === 'auto' ? 'auto' : sp.days.join(' or ') + ' days'}</span></span>
+                <span className="mt-0.5 block text-sm text-muted">{sp.blurb}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div>
+            <p className="text-sm text-muted">This archives your current plan and builds a <b>{splitInfo(chosen).label}</b> plan ({chosen === 'auto' ? profile?.training_days : daysForSplit(chosen, profile?.training_days ?? 3)} days a week). Your workout history is kept.</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button className={btnGhost} onClick={() => setChosen(null)}>Back</button>
+              <button className="min-h-11 rounded-xl bg-accent font-semibold text-white" onClick={() => applySplit(chosen)}>Switch</button>
+            </div>
+          </div>
+        )}
+      </Sheet>
 
       <Sheet open={confirm} onClose={() => setConfirm(false)} title="Regenerate plan?">
         <p className="text-sm text-muted">This archives your current plan and builds a new one from your profile. Your workout history is kept.</p>

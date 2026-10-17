@@ -3,6 +3,7 @@ export type Sex = 'male' | 'female'
 export type GoalType = 'lose' | 'gain' | 'maintain'
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'very_active'
 export type Equipment = 'gym' | 'home' | 'dumbbells'
+export type SplitType = 'auto' | 'full_body' | 'upper_lower' | 'ppl' | 'bro' | 'arnold'
 export type Experience = 'beginner' | 'intermediate'
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 export type FoodSource = 'manual' | 'OFF' | 'USDA' | 'estimate'
@@ -18,7 +19,9 @@ export interface Profile {
   goal_weight_kg: number
   /** Fraction of TDEE: lose = 0.10-0.20 deficit, gain = 0.05-0.10 surplus. */
   goal_pace: number
-  training_days: 2 | 3 | 4 | 5
+  training_days: 2 | 3 | 4 | 5 | 6
+  /** Workout split style; undefined or 'auto' picks by training_days. */
+  split_type?: SplitType
   equipment: Equipment
   experience: Experience
   limits_note: string

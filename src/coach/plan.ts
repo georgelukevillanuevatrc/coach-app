@@ -1,5 +1,5 @@
 // Weekly split generator (PLAN.md section 5). Pure: takes a profile and the exercise library.
-import type { Exercise, MuscleGroup, Plan, PlanDay, Profile } from '../lib/types'
+import type { Exercise, MuscleGroup, Plan, PlanDay, Profile, SplitType } from '../lib/types'
 
 type Ex = Exercise & { id: number }
 type Slot = { mg: MuscleGroup; kind: 'compound' | 'iso'; lower?: boolean; re?: RegExp }
@@ -55,18 +55,53 @@ const LOWER: Slot[] = [C('legs', true), C('legs', true), C('legs', true), I('leg
 const PUSH: Slot[] = [C('chest'), C('shoulders'), C('chest'), I('shoulders'), I('arms', TRI), I('arms', TRI)]
 const PULL: Slot[] = [C('back'), C('back'), C('back'), I('shoulders'), I('arms', BI), I('arms', BI)]
 
-const TEMPLATES: Record<number, { name: string; slots: Slot[]; variant: number }[]> = {
-  2: [{ name: 'Full Body A', slots: FULL, variant: 0 }, { name: 'Full Body B', slots: FULL, variant: 1 }],
-  3: [{ name: 'Full Body A', slots: FULL, variant: 0 }, { name: 'Full Body B', slots: FULL, variant: 1 }, { name: 'Full Body A', slots: FULL, variant: 0 }],
-  4: [
-    { name: 'Upper A', slots: UPPER, variant: 0 }, { name: 'Lower A', slots: LOWER, variant: 0 },
-    { name: 'Upper B', slots: UPPER, variant: 1 }, { name: 'Lower B', slots: LOWER, variant: 1 },
-  ],
-  5: [
-    { name: 'Push', slots: PUSH, variant: 0 }, { name: 'Pull', slots: PULL, variant: 0 }, { name: 'Legs', slots: LOWER, variant: 0 },
-    { name: 'Upper', slots: UPPER, variant: 1 }, { name: 'Lower', slots: LOWER, variant: 1 },
-  ],
+const SHOULDERS: Slot[] = [C('shoulders'), C('shoulders'), I('shoulders'), I('shoulders'), I('core')]
+const CHEST: Slot[] = [C('chest'), C('chest'), C('chest'), I('chest'), I('arms', TRI)]
+const BACK: Slot[] = [C('back'), C('back'), C('back'), I('back'), I('arms', BI)]
+const ARMS: Slot[] = [I('arms', BI), I('arms', TRI), I('arms', BI), I('arms', TRI), I('core')]
+const CHEST_BACK: Slot[] = [C('chest'), C('back'), C('chest'), C('back'), I('chest'), I('back')]
+const SHOULDERS_ARMS: Slot[] = [C('shoulders'), I('shoulders'), I('arms', BI), I('arms', TRI), I('arms', BI), I('arms', TRI)]
+
+type Day_ = { name: string; slots: Slot[]; variant: number }
+const D = (name: string, slots: Slot[], variant = 0): Day_ => ({ name, slots, variant })
+
+export interface SplitInfo {
+  id: SplitType
+  label: string
+  blurb: string
+  /** allowed days per week; first is the default */
+  days: number[]
+  build: (n: number) => Day_[]
 }
+
+const fullBody = (n: number) => Array.from({ length: n }, (_, i) => D(`Full Body ${i % 2 ? 'B' : 'A'}`, FULL, i % 2))
+const upperLower = (n: number) => {
+  const out: Day_[] = []
+  for (let i = 0; i < n; i++) out.push(i % 2 === 0 ? D(`Upper ${i < 2 ? 'A' : 'B'}`, UPPER, i < 2 ? 0 : 1) : D(`Lower ${i < 2 ? 'A' : 'B'}`, LOWER, i < 2 ? 0 : 1))
+  return out
+}
+const ppl = (n: number) => {
+  const one = [D('Push', PUSH), D('Pull', PULL), D('Legs', LOWER)]
+  return n >= 6 ? [...one, D('Push 2', PUSH, 1), D('Pull 2', PULL, 1), D('Legs 2', LOWER, 1)] : one
+}
+const auto = (n: number): Day_[] => {
+  if (n <= 3) return fullBody(n)
+  if (n === 4) return upperLower(4)
+  if (n === 5) return [D('Push', PUSH), D('Pull', PULL), D('Legs', LOWER), D('Upper', UPPER, 1), D('Lower', LOWER, 1)]
+  return ppl(6)
+}
+
+export const SPLITS: SplitInfo[] = [
+  { id: 'auto', label: 'Recommended', blurb: 'Picks the best split for your training days.', days: [3], build: auto },
+  { id: 'full_body', label: 'Full body', blurb: 'Every session trains the whole body. Great for beginners and 2-3 days a week.', days: [3, 2, 4], build: fullBody },
+  { id: 'upper_lower', label: 'Upper / Lower', blurb: 'Alternates upper and lower body. Each muscle is trained twice a week.', days: [4], build: upperLower },
+  { id: 'ppl', label: 'Push / Pull / Legs', blurb: 'Push muscles, pull muscles, then legs. Run it once (3 days) or twice (6 days) a week.', days: [3, 6], build: ppl },
+  { id: 'bro', label: 'Body-part (bro) split', blurb: 'One muscle group a day: chest, back, shoulders, legs, arms. Best for intermediates with 5 days.', days: [5], build: () => [D('Chest', CHEST), D('Back', BACK), D('Shoulders', SHOULDERS), D('Legs', LOWER), D('Arms', ARMS)] },
+  { id: 'arnold', label: 'Arnold split', blurb: 'Chest + back, shoulders + arms, legs, repeated twice. 6 days, high volume.', days: [6], build: () => [D('Chest + Back', CHEST_BACK), D('Shoulders + Arms', SHOULDERS_ARMS), D('Legs', LOWER), D('Chest + Back 2', CHEST_BACK, 1), D('Shoulders + Arms 2', SHOULDERS_ARMS, 1), D('Legs 2', LOWER, 1)] },
+]
+export const splitInfo = (id: SplitType | undefined) => SPLITS.find((s) => s.id === (id ?? 'auto')) ?? SPLITS[0]
+/** Days per week to use when switching to a split, keeping the current choice when allowed. */
+export const daysForSplit = (id: SplitType, current: number) => (id === 'auto' || splitInfo(id).days.includes(current) ? current : splitInfo(id).days[0])
 
 function pick(pool: Ex[], slot: Slot, used: Set<number>, variant: number): Ex | undefined {
   const inGroup = pool.filter((e) => e.muscle_group === slot.mg && !used.has(e.id) && (!slot.re || slot.re.test(e.name)))
@@ -96,7 +131,8 @@ export function generatePlan(profile: Profile, exercises: Exercise[], startDate 
   }))
   const pool = eqPool.filter((e) => !rules.some((r) => r.re.test(e.name)))
 
-  const tpl = TEMPLATES[profile.training_days] ?? TEMPLATES[3]
+  const info = splitInfo(profile.split_type)
+  const tpl = info.build(info.id === 'auto' || info.days.includes(profile.training_days) ? profile.training_days : info.days[0])
   const days = tpl.map((t, i) => {
     const used = new Set<number>()
     let firstCompoundDone = false
@@ -112,7 +148,7 @@ export function generatePlan(profile: Profile, exercises: Exercise[], startDate 
     return { day_index: i, name: t.name, exercises: out }
   })
   return {
-    plan: { name: `${profile.training_days}-day ${profile.experience} plan`, start_date: startDate, weeks: 5, status: 'active' },
+    plan: { name: `${tpl.length}-day ${info.id === 'auto' ? '' : info.label + ' '}${profile.experience} plan`, start_date: startDate, weeks: 5, status: 'active' },
     days,
     flags,
   }
