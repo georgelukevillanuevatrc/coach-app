@@ -1,0 +1,166 @@
+import type { SearchFood } from './map'
+
+// Built-in estimates so search works instantly and offline. Values are typical, not lab-exact.
+// [name, serving, grams, kcal, protein, carbs, fat, extra search words]
+type Row = [string, string, number, number, number, number, number, string?]
+const ROWS: Row[] = [
+  // Rice, noodles, bread
+  ['White rice (cooked)', '1 cup', 160, 205, 4, 45, 0.4, 'kanin steamed'],
+  ['Brown rice (cooked)', '1 cup', 195, 215, 5, 45, 1.8],
+  ['Garlic fried rice (sinangag)', '1 cup', 170, 270, 5, 45, 7, 'sinangag'],
+  ['Pandesal', '1 piece', 35, 90, 3, 17, 1, 'bread roll'],
+  ['White bread', '1 slice', 28, 75, 2.5, 14, 1, 'loaf sandwich'],
+  ['Whole wheat bread', '1 slice', 32, 80, 4, 14, 1.2],
+  ['Pancit canton', '1 cup', 200, 260, 7, 38, 9, 'noodles'],
+  ['Pancit bihon', '1 cup', 200, 230, 8, 35, 6, 'noodles'],
+  ['Spaghetti Filipino style', '1 cup', 250, 340, 12, 45, 12, 'pasta sweet'],
+  ['Instant noodles', '1 pack', 70, 330, 7, 45, 14, 'ramen lucky me'],
+  ['Oatmeal (cooked)', '1 cup', 240, 160, 6, 27, 3, 'oats'],
+  ['Corn flakes', '1 cup', 28, 100, 2, 24, 0.2, 'cereal'],
+  ['Boiled sweet potato (kamote)', '1 medium', 130, 115, 2, 27, 0.1, 'kamote'],
+  ['Boiled potato', '1 medium', 170, 130, 3, 30, 0.2],
+  ['Boiled corn (mais)', '1 ear', 100, 100, 3, 21, 1.4, 'mais'],
+  // Eggs, dairy
+  ['Egg (boiled)', '1 egg', 50, 78, 6, 0.6, 5, 'itlog hard boiled'],
+  ['Egg (fried)', '1 egg', 46, 90, 6, 0.4, 7, 'itlog'],
+  ['Egg white', '1 egg white', 33, 17, 3.6, 0.2, 0.1],
+  ['Salted egg', '1 egg', 55, 95, 7, 1, 7, 'itlog na maalat'],
+  ['Whole milk', '1 cup', 244, 150, 8, 12, 8, 'gatas'],
+  ['Low-fat milk', '1 cup', 244, 105, 8, 12, 2.5],
+  ['Plain yogurt', '1 cup', 245, 150, 9, 17, 4],
+  ['Greek yogurt (plain)', '1 cup', 245, 130, 22, 8, 1],
+  ['Cheddar cheese', '1 slice', 28, 110, 7, 0.4, 9, 'keso'],
+  ['Cheese (quickmelt)', '1 slice', 20, 65, 4, 1, 5],
+  // Poultry
+  ['Chicken adobo', '1 serving', 150, 320, 26, 5, 21, 'manok'],
+  ['Chicken breast (grilled)', '100 g', 100, 165, 31, 0, 3.6, 'manok'],
+  ['Chicken thigh (cooked)', '1 piece', 100, 210, 26, 0, 11, 'manok'],
+  ['Fried chicken (leg)', '1 piece', 110, 280, 24, 8, 17, 'jollibee chickenjoy'],
+  ['Chicken tinola', '1 bowl', 300, 220, 22, 8, 11, 'manok soup'],
+  ['Chicken inasal', '1 piece', 180, 300, 28, 3, 19, 'manok'],
+  ['Chicken afritada', '1 serving', 200, 260, 20, 12, 15, 'manok'],
+  ['Tapa (beef)', '1 serving', 100, 220, 22, 6, 12, 'beef tapsilog'],
+  // Pork
+  ['Pork adobo', '1 serving', 150, 380, 24, 5, 29, 'baboy'],
+  ['Pork sinigang', '1 bowl', 350, 300, 22, 12, 18, 'baboy sour soup'],
+  ['Pork sisig', '1 serving', 150, 380, 22, 4, 31, 'baboy'],
+  ['Lechon kawali', '1 serving', 100, 450, 22, 0, 40, 'baboy crispy'],
+  ['Pork liempo (grilled)', '100 g', 100, 340, 18, 0, 30, 'baboy'],
+  ['Pork chop (grilled)', '1 piece', 120, 260, 28, 0, 16, 'baboy'],
+  ['Longganisa', '2 pcs', 80, 230, 10, 8, 17, 'sausage'],
+  ['Tocino', '1 serving', 80, 230, 12, 14, 14, 'sweet cured pork'],
+  ['Bacon', '2 slices', 16, 85, 6, 0.2, 6.5],
+  ['Hotdog (Filipino)', '1 piece', 50, 130, 5, 6, 9, 'tender juicy'],
+  ['Spam / luncheon meat', '2 slices', 56, 175, 7, 2, 15],
+  ['Corned beef (canned)', '1/2 cup', 100, 215, 14, 2, 16, 'ndo delimondo'],
+  ['Embutido', '1 slice', 60, 150, 8, 6, 10],
+  ['Dinuguan', '1 serving', 150, 250, 18, 4, 18],
+  ['Kare-kare', '1 serving', 250, 420, 25, 14, 30],
+  ['Beef nilaga', '1 bowl', 350, 300, 28, 14, 15],
+  ['Beef steak (bistek)', '1 serving', 150, 280, 26, 8, 16],
+  ['Beef caldereta', '1 serving', 200, 360, 24, 12, 24],
+  ['Menudo', '1 serving', 200, 320, 20, 14, 21],
+  ['Lumpiang shanghai', '4 pcs', 80, 240, 9, 18, 14, 'spring roll'],
+  ['Siomai', '4 pcs', 100, 210, 10, 16, 11, 'dumpling'],
+  ['Pork BBQ skewer', '1 stick', 70, 160, 11, 8, 9, 'barbecue inihaw'],
+  ['Isaw / chicken skin', '1 stick', 40, 120, 6, 4, 9, 'street food'],
+  // Fish and seafood
+  ['Bangus (fried milkfish)', '1 piece', 120, 230, 24, 0, 15, 'milkfish daing'],
+  ['Tilapia (fried)', '1 piece', 130, 220, 28, 2, 11],
+  ['Sinigang na isda', '1 bowl', 350, 200, 22, 10, 8, 'fish soup'],
+  ['Tuna (canned in water)', '1 can', 120, 120, 26, 0, 1.5, 'tuna'],
+  ['Tuna (canned in oil)', '1 can', 120, 210, 24, 0, 12],
+  ['Sardines in tomato sauce', '1 can', 155, 200, 20, 6, 11, 'ligo mackerel'],
+  ['Tinapa (smoked fish)', '1 piece', 80, 150, 18, 0, 8],
+  ['Dried fish (daing/tuyo)', '1 piece', 30, 80, 14, 0, 3],
+  ['Shrimp (cooked)', '100 g', 100, 100, 21, 1, 1.4, 'hipon'],
+  ['Squid (calamari)', '100 g', 100, 175, 18, 8, 8, 'pusit'],
+  ['Salmon (baked)', '100 g', 100, 205, 22, 0, 12],
+  ['Fish fillet (fried)', '1 piece', 100, 230, 18, 12, 12],
+  // Veg
+  ['Pinakbet', '1 cup', 180, 120, 5, 12, 6, 'vegetables'],
+  ['Chopsuey', '1 cup', 180, 140, 8, 10, 7],
+  ['Ginisang monggo', '1 cup', 200, 210, 12, 26, 6, 'mung bean'],
+  ['Laing', '1 cup', 150, 230, 7, 9, 19, 'gabi coconut'],
+  ['Adobong kangkong', '1 cup', 150, 100, 4, 6, 7],
+  ['Tortang talong', '1 piece', 120, 150, 7, 7, 11, 'eggplant omelette'],
+  ['Ensaladang talong', '1 serving', 120, 90, 2, 10, 5],
+  ['Green salad', '1 bowl', 100, 30, 2, 5, 0.3],
+  ['Broccoli (steamed)', '1 cup', 90, 30, 3, 6, 0.3],
+  ['Carrots (cooked)', '1/2 cup', 80, 35, 1, 8, 0.2],
+  ['Cabbage (cooked)', '1 cup', 150, 35, 2, 8, 0.2, 'repolyo'],
+  ['Tofu (fried)', '100 g', 100, 190, 14, 4, 13, 'tokwa'],
+  ['Tokwa\'t baboy', '1 serving', 150, 340, 20, 6, 26],
+  // Fruit
+  ['Banana (saging)', '1 medium', 118, 105, 1.3, 27, 0.4, 'lakatan saging'],
+  ['Saba banana (boiled)', '1 piece', 100, 110, 1, 28, 0.2, 'saging nga saba'],
+  ['Banana cue', '1 stick', 90, 220, 1, 40, 7, 'saging turon'],
+  ['Mango (ripe)', '1 cup', 165, 100, 1.4, 25, 0.6, 'mangga'],
+  ['Apple', '1 medium', 182, 95, 0.5, 25, 0.3, 'mansanas'],
+  ['Orange', '1 medium', 131, 62, 1.2, 15, 0.2, 'dalandan'],
+  ['Pineapple', '1 cup', 165, 82, 0.9, 22, 0.2, 'pinya'],
+  ['Papaya', '1 cup', 140, 60, 0.7, 15, 0.4],
+  ['Watermelon', '1 cup', 152, 46, 0.9, 11, 0.2, 'pakwan'],
+  ['Grapes', '1 cup', 150, 100, 1, 27, 0.2],
+  ['Avocado', '1/2 fruit', 100, 160, 2, 9, 15],
+  ['Calamansi juice', '1 glass', 240, 40, 0.5, 10, 0],
+  // Snacks, sweets
+  ['Halo-halo', '1 glass', 350, 380, 6, 70, 8],
+  ['Leche flan', '1 slice', 100, 220, 6, 34, 7],
+  ['Bibingka', '1 piece', 120, 250, 5, 40, 8],
+  ['Puto', '1 piece', 40, 90, 2, 18, 1],
+  ['Kutsinta', '1 piece', 40, 75, 0.5, 18, 0.2],
+  ['Turon', '1 piece', 90, 230, 2, 38, 8],
+  ['Ube halaya', '1/4 cup', 70, 180, 2, 32, 5],
+  ['Siopao (asado)', '1 piece', 110, 280, 11, 40, 8],
+  ['Ensaymada', '1 piece', 70, 280, 5, 33, 14],
+  ['Chocolate bar', '1 bar', 45, 235, 3, 26, 13],
+  ['Potato chips', '1 small bag', 28, 150, 2, 15, 10, 'piattos'],
+  ['Biscuit / crackers', '4 pcs', 30, 130, 2, 20, 4, 'skyflakes'],
+  ['Ice cream', '1/2 cup', 70, 140, 2.5, 16, 7, 'sorbetes'],
+  ['Donut', '1 piece', 60, 250, 3, 30, 13],
+  // Fast food and drinks
+  ['Burger (fast food)', '1 burger', 150, 350, 17, 32, 17, 'hamburger'],
+  ['French fries', '1 medium', 117, 365, 4, 48, 17],
+  ['Pizza slice', '1 slice', 107, 285, 12, 36, 10],
+  ['Coke / soda', '1 can', 330, 140, 0, 35, 0, 'softdrinks pepsi sprite'],
+  ['Coffee 3-in-1', '1 sachet', 20, 80, 0.5, 14, 2.5, 'nescafe kape'],
+  ['Black coffee', '1 cup', 240, 2, 0.3, 0, 0, 'kape americano'],
+  ['Milk tea', '1 medium', 500, 330, 3, 60, 8, 'boba'],
+  ['Beer', '1 bottle', 330, 150, 1.5, 12, 0, 'san mig red horse'],
+  ['Orange juice', '1 cup', 248, 110, 2, 26, 0.5],
+  ['Sports drink', '1 bottle', 500, 120, 0, 30, 0, 'gatorade'],
+  // Gym staples
+  ['Whey protein shake', '1 scoop', 30, 120, 24, 3, 1.5, 'protein powder'],
+  ['Protein bar', '1 bar', 60, 220, 20, 22, 7],
+  ['Peanut butter', '1 tbsp', 16, 95, 4, 3, 8],
+  ['Almonds', '1 handful', 28, 165, 6, 6, 14],
+  ['Peanuts (roasted)', '1 handful', 28, 165, 7, 6, 14, 'mani'],
+  ['Olive oil', '1 tbsp', 14, 120, 0, 0, 14],
+  ['Cooking oil', '1 tbsp', 14, 120, 0, 0, 14],
+  ['Butter', '1 tbsp', 14, 100, 0.1, 0, 11, 'mantikilya'],
+  ['Mayonnaise', '1 tbsp', 14, 95, 0.1, 0.4, 10],
+  ['Sugar', '1 tsp', 4, 16, 0, 4, 0, 'asukal'],
+  ['Honey', '1 tbsp', 21, 64, 0, 17, 0],
+  ['Soy sauce', '1 tbsp', 16, 9, 1, 1, 0, 'toyo'],
+  ['Banana protein smoothie', '1 glass', 350, 280, 25, 38, 4],
+  ['Chicken breast with rice meal', '1 plate', 350, 520, 40, 60, 10, 'gym meal'],
+]
+
+export const LOCAL_FOODS: SearchFood[] = ROWS.map(([name, serving, g, kcal, p, c, f, extra]) => ({
+  name, serving_desc: `${serving} (${g} g)`, serving_g: g, calories: kcal, protein_g: p, carbs_g: c, fat_g: f,
+  source: 'estimate', is_favorite: false, ...(extra ? { search: extra } : {}),
+} as SearchFood & { search?: string }))
+
+const keys = new Map<SearchFood, string>(
+  ROWS.map((r, i) => [LOCAL_FOODS[i], `${r[0]} ${r[7] ?? ''}`.toLowerCase()]),
+)
+
+/** Case-insensitive match on every word; name matches rank first. Pure and instant. */
+export function searchLocal(q: string, limit = 25): SearchFood[] {
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean)
+  if (!words.length) return []
+  const hits = LOCAL_FOODS.filter((f) => words.every((w) => keys.get(f)!.includes(w)))
+  const nameStarts = (f: SearchFood) => (f.name.toLowerCase().startsWith(words[0]) ? 0 : 1)
+  return hits.sort((a, b) => nameStarts(a) - nameStarts(b) || a.name.length - b.name.length).slice(0, limit)
+}
