@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f2f2f7; --card: #ffffff; --text: #111; --muted: #6b7280; --line: #e5e7eb; --accent: #0a84ff;
+  --protein: #ff453a; --carbs: #30b0c7; --fat: #ffb340;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #000; --card: #1c1c1e; --text: #f5f5f7; --muted: #9ca3af; --line: #2c2c2e; }
+}
+@theme inline {
+  --color-bg: var(--bg); --color-card: var(--card); --color-ink: var(--text); --color-muted: var(--muted);
+  --color-line: var(--line); --color-accent: var(--accent);
+  --color-protein: var(--protein); --color-carbs: var(--carbs); --color-fat: var(--fat);
+}
+html, body, #root { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent; overscroll-behavior: none;
+}
+button { user-select: none; -webkit-user-select: none; }
+input, select, textarea { font-size: 16px; }
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
