@@ -22,6 +22,7 @@ export function AddSheet({ open, meal, date, onClose, onLogged }: {
 }) {
   const [tab, setTab] = useState<Tab>('recents')
   const [q, setQ] = useState('')
+  const [manualName, setManualName] = useState('')
   const foods = useLiveQuery(() => db.foods.toArray(), [], [] as Food[])
   const meals = useLiveQuery(() => db.saved_meals.toArray(), [], [])
   const recents = useLiveQuery(async () => {
@@ -82,7 +83,13 @@ export function AddSheet({ open, meal, date, onClose, onLogged }: {
         ))}
       </div>
       {tab !== 'manual' && (
-        <input className={`${inputCls} mb-2 shrink-0`} type="search" inputMode="search" placeholder={tab === 'search' ? 'Search foods online' : 'Search'} value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className={`${inputCls} mb-2 shrink-0`} type="search" inputMode="search" placeholder={tab === 'search' ? 'Search all foods' : 'Search'} value={q} onChange={(e) => setQ(e.target.value)} />
+      )}
+
+      {tab !== 'search' && tab !== 'manual' && ql.length >= 2 && (
+        <button onClick={() => setTab('search')} className="mb-2 flex min-h-12 w-full items-center justify-between rounded-xl bg-accent/10 px-4 text-left font-medium text-accent">
+          <span className="truncate">Search all foods for "{q.trim()}"</span><span aria-hidden>→</span>
+        </button>
       )}
 
       {tab === 'recents' && (
@@ -131,9 +138,9 @@ export function AddSheet({ open, meal, date, onClose, onLogged }: {
         </div>
       )}
 
-      {tab === 'search' && <SearchTab q={q} meal={label} onLog={logOnline} />}
+      {tab === 'search' && <SearchTab q={q} meal={label} onLog={logOnline} onAddManual={(n) => { setManualName(n); setTab('manual') }} />}
 
-      {tab === 'manual' && <FoodForm showSave submitLabel={`Add to ${label}`} onSubmit={manual} />}
+      {tab === 'manual' && <FoodForm key={manualName} initial={manualName ? { name: manualName } : undefined} saveDefault={!!manualName} showSave submitLabel={`Add to ${label}`} onSubmit={manual} />}
     </Sheet>
   )
 }

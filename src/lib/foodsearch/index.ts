@@ -3,6 +3,8 @@ import { mapOffProduct, mapUsdaFood, type OffProduct, type SearchFood, type Usda
 export * from './map'
 
 export const USDA_KEY_STORAGE = 'usda_key'
+/** USDA's public, rate-limited demo key (documented at fdc.nal.usda.gov). Not a secret. */
+export const DEMO_KEY = 'DEMO_KEY'
 const OFF = 'https://world.openfoodfacts.org'
 
 export function getUsdaKey(): string {

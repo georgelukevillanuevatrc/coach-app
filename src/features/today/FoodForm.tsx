@@ -9,8 +9,8 @@ export interface FoodFormValues {
   save: boolean
 }
 
-export function FoodForm({ initial, showSave, submitLabel, onSubmit }: {
-  initial?: Partial<Food>; showSave?: boolean; submitLabel: string; onSubmit: (v: FoodFormValues) => void
+export function FoodForm({ initial, showSave, saveDefault, submitLabel, onSubmit }: {
+  initial?: Partial<Food>; showSave?: boolean; saveDefault?: boolean; submitLabel: string; onSubmit: (v: FoodFormValues) => void
 }) {
   const [name, setName] = useState(initial?.name ?? '')
   const [serving, setServing] = useState(initial?.serving_desc ?? '1 serving')
@@ -19,7 +19,7 @@ export function FoodForm({ initial, showSave, submitLabel, onSubmit }: {
   const [c, setC] = useState(initial?.carbs_g != null ? String(initial.carbs_g) : '')
   const [fa, setFa] = useState(initial?.fat_g != null ? String(initial.fat_g) : '')
   const [estimate, setEstimate] = useState(initial?.source === 'estimate')
-  const [save, setSave] = useState(false)
+  const [save, setSave] = useState(saveDefault ?? false)
   const valid = name.trim().length > 0 && num(cal) > 0
 
   const submit = () => {

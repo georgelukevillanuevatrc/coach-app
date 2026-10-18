@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      workbox: { navigateFallback: 'index.html' },
+      workbox: { navigateFallback: 'index.html', skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true },
       manifest: {
         name: 'Coach',
         short_name: 'Coach',
