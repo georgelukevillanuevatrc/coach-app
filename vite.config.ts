@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   base: process.env.BASE_PATH ?? '/',
+  define: { __BUILD_ID__: JSON.stringify(`${(process.env.GITHUB_SHA ?? 'dev').slice(0, 7)} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`) },
   plugins: [
     react(),
     tailwindcss(),

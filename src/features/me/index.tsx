@@ -7,6 +7,7 @@ import type { Profile } from '../../lib/types'
 import { computeTargets } from '../../coach/calories'
 import { ProfileForm } from './ProfileForm'
 import RemindersSettings from '../reminders/RemindersSettings'
+import AppInfo from './AppInfo'
 import { countPhotos, exportPhotos } from '../progress/photosDb'
 import { exportData, importBackup, parseBackup, type Backup } from './backup'
 
@@ -109,7 +110,7 @@ export default function Me() {
   const [showHow, setShowHow] = useState(false)
 
   if (profile === null) return <div className="p-4 text-muted">Loading...</div>
-  if (!profile) return <><Onboarding /><div className="p-4 pt-0"><Backups /></div></>
+  if (!profile) return <><Onboarding /><div className="space-y-4 p-4 pt-0"><Backups /><AppInfo /></div></>
 
   const calc = computeTargets(profile)
   const goalLabel = { lose: 'Lose fat', gain: 'Build muscle', maintain: 'Maintain' }[profile.goal_type]
@@ -150,6 +151,7 @@ export default function Me() {
       <RemindersSettings />
 
       <Backups />
+      <AppInfo />
 
       <section className={card}>
         <h2 className="text-lg font-semibold">Units</h2>
