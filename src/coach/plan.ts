@@ -53,7 +53,7 @@ const FULL: Slot[] = [C('legs', true), C('chest'), C('back'), C('legs', true), C
 const UPPER: Slot[] = [C('chest'), C('back'), C('shoulders'), C('back'), I('arms', BI), I('arms', TRI)]
 const LOWER: Slot[] = [C('legs', true), C('legs', true), C('legs', true), I('legs'), I('legs'), I('core')]
 const PUSH: Slot[] = [C('chest'), C('shoulders'), C('chest'), I('shoulders'), I('arms', TRI), I('arms', TRI)]
-const PULL: Slot[] = [C('back'), C('back'), C('back'), I('shoulders'), I('arms', BI), I('arms', BI)]
+const PULL: Slot[] = [C('back'), C('back'), C('back'), I('shoulders', /rear|face pull|reverse/i), I('arms', BI), I('arms', BI)]
 
 const SHOULDERS: Slot[] = [C('shoulders'), C('shoulders'), I('shoulders'), I('shoulders'), I('core')]
 const CHEST: Slot[] = [C('chest'), C('chest'), C('chest'), I('chest'), I('arms', TRI)]
