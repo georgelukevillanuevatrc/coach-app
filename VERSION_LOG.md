@@ -10,3 +10,6 @@
 ## 0.2.0 (2026-10-17)
 - Food search (Open Food Facts), barcode scan, progress photos, in-app reminders
 - Not included: cloud sync, background push, AI coach (deferred by owner)
+- Exercise library expanded to ~870 exercises (upper, lower, core, cardio, kettlebell, band); new muscle groups glutes, calves, traps, forearms, cardio
+- New split: Chest & Triceps / Shoulders & Legs / Back & Biceps
+- Existing phones receive new exercises automatically on next open

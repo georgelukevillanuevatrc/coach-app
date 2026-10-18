@@ -21,7 +21,7 @@ describe('generatePlan', () => {
     expect(n(5)).toEqual(['Push', 'Pull', 'Legs', 'Upper', 'Lower'])
   })
   it('respects equipment', () => {
-    for (const [eq, allowed] of [['gym', ['barbell', 'machine', 'cable']], ['home', ['bodyweight', 'dumbbell']], ['dumbbells', ['dumbbell', 'bodyweight']]] as const) {
+    for (const [eq, allowed] of [['gym', ['barbell', 'machine', 'cable', 'kettlebell']], ['home', ['bodyweight', 'dumbbell', 'kettlebell', 'band']], ['dumbbells', ['dumbbell', 'bodyweight', 'band']]] as const) {
       const p = generatePlan(profile({ equipment: eq, training_days: 5, experience: 'intermediate' }), lib)
       for (const d of p.days) {
         expect(d.exercises.length).toBeGreaterThanOrEqual(4)
@@ -85,5 +85,16 @@ describe('split types', () => {
     expect(daysForSplit('ppl', 6)).toBe(6)
     expect(daysForSplit('auto', 4)).toBe(4)
     expect(splitInfo(undefined).id).toBe('auto')
+  })
+  it('pairs split gives chest+triceps, shoulders+legs, back+biceps', () => {
+    const profile = { id: 1, age: 30, sex: 'male', height_cm: 175, weight_kg: 75, activity_level: 'moderate', goal_type: 'gain', goal_weight_kg: 80, goal_pace: 0.07, training_days: 3, equipment: 'gym', experience: 'intermediate', limits_note: '', split_type: 'pairs' } as const
+    const g = generatePlan(profile, lib)
+    expect(g.days.map((d) => d.name)).toEqual(['Chest + Triceps', 'Shoulders + Legs', 'Back + Biceps'])
+    const six = generatePlan({ ...profile, training_days: 6 }, lib)
+    expect(six.days.length).toBe(6)
+    const group = (id: number) => lib.find((e) => e.id === id)!.muscle_group
+    expect(new Set(g.days[0].exercises.map((e) => group(e.exercise_id)))).toEqual(new Set(['chest', 'arms']))
+    expect(new Set(g.days[1].exercises.map((e) => group(e.exercise_id)))).toEqual(new Set(['shoulders', 'legs']))
+    expect(new Set(g.days[2].exercises.map((e) => group(e.exercise_id)))).toEqual(new Set(['back', 'arms']))
   })
 })

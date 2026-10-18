@@ -3,7 +3,7 @@ export type Sex = 'male' | 'female'
 export type GoalType = 'lose' | 'gain' | 'maintain'
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'very_active'
 export type Equipment = 'gym' | 'home' | 'dumbbells'
-export type SplitType = 'auto' | 'full_body' | 'upper_lower' | 'ppl' | 'bro' | 'arnold'
+export type SplitType = 'auto' | 'full_body' | 'upper_lower' | 'ppl' | 'pairs' | 'bro' | 'arnold'
 export type Experience = 'beginner' | 'intermediate'
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 export type FoodSource = 'manual' | 'OFF' | 'USDA' | 'estimate'
@@ -74,12 +74,12 @@ export interface WeightLog {
   waist_cm?: number
   note?: string
 }
-export type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core'
+export type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core' | 'glutes' | 'calves' | 'traps' | 'forearms' | 'cardio'
 export interface Exercise {
   id?: number
   name: string
   muscle_group: MuscleGroup
-  equipment: 'barbell' | 'dumbbell' | 'machine' | 'bodyweight' | 'cable'
+  equipment: 'barbell' | 'dumbbell' | 'machine' | 'bodyweight' | 'cable' | 'kettlebell' | 'band'
   is_compound: boolean
   is_lower: boolean
   /** names of substitute exercises */

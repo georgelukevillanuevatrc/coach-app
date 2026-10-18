@@ -96,4 +96,4 @@ export function usePRs() {
 }
 
 export const fmtKg = (n: number) => (n === 0 ? 'BW' : `${Number.isInteger(n) ? n : n.toFixed(1)} kg`)
-export const MUSCLES = ['chest', 'back', 'legs', 'shoulders', 'arms', 'core'] as const
+export const MUSCLES = ['chest', 'back', 'shoulders', 'arms', 'forearms', 'traps', 'core', 'legs', 'glutes', 'calves', 'cardio'] as const

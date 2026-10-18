@@ -38,9 +38,9 @@ export function isFlagged(name: string, note: string): boolean {
 }
 
 const ALLOWED: Record<Profile['equipment'], Exercise['equipment'][]> = {
-  gym: ['barbell', 'machine', 'cable'],
-  home: ['bodyweight', 'dumbbell'],
-  dumbbells: ['dumbbell', 'bodyweight'],
+  gym: ['barbell', 'machine', 'cable', 'kettlebell'],
+  home: ['bodyweight', 'dumbbell', 'kettlebell', 'band'],
+  dumbbells: ['dumbbell', 'bodyweight', 'band'],
 }
 export const equipmentAllows = (eq: Profile['equipment'], ex: Exercise) => ALLOWED[eq].includes(ex.equipment)
 
@@ -61,6 +61,10 @@ const BACK: Slot[] = [C('back'), C('back'), C('back'), I('back'), I('arms', BI)]
 const ARMS: Slot[] = [I('arms', BI), I('arms', TRI), I('arms', BI), I('arms', TRI), I('core')]
 const CHEST_BACK: Slot[] = [C('chest'), C('back'), C('chest'), C('back'), I('chest'), I('back')]
 const SHOULDERS_ARMS: Slot[] = [C('shoulders'), I('shoulders'), I('arms', BI), I('arms', TRI), I('arms', BI), I('arms', TRI)]
+
+const CHEST_TRI: Slot[] = [C('chest'), C('chest'), I('chest'), I('arms', TRI), I('arms', TRI), I('arms', TRI)]
+const SHOULDERS_LEGS: Slot[] = [C('shoulders'), C('shoulders'), I('shoulders'), C('legs', true), C('legs', true), I('legs'), I('legs')]
+const BACK_BI: Slot[] = [C('back'), C('back'), C('back'), I('back'), I('arms', BI), I('arms', BI)]
 
 type Day_ = { name: string; slots: Slot[]; variant: number }
 const D = (name: string, slots: Slot[], variant = 0): Day_ => ({ name, slots, variant })
@@ -96,6 +100,10 @@ export const SPLITS: SplitInfo[] = [
   { id: 'full_body', label: 'Full body', blurb: 'Every session trains the whole body. Great for beginners and 2-3 days a week.', days: [3, 2, 4], build: fullBody },
   { id: 'upper_lower', label: 'Upper / Lower', blurb: 'Alternates upper and lower body. Each muscle is trained twice a week.', days: [4], build: upperLower },
   { id: 'ppl', label: 'Push / Pull / Legs', blurb: 'Push muscles, pull muscles, then legs. Run it once (3 days) or twice (6 days) a week.', days: [3, 6], build: ppl },
+  { id: 'pairs', label: 'Chest & Triceps / Shoulders & Legs / Back & Biceps', blurb: 'Classic 3-day pairing: chest with triceps, shoulders with legs, back with biceps. Run it once (3 days) or twice (6 days) a week.', days: [3, 6], build: (n) => {
+    const one = [D('Chest + Triceps', CHEST_TRI), D('Shoulders + Legs', SHOULDERS_LEGS), D('Back + Biceps', BACK_BI)]
+    return n >= 6 ? [...one, D('Chest + Triceps 2', CHEST_TRI, 1), D('Shoulders + Legs 2', SHOULDERS_LEGS, 1), D('Back + Biceps 2', BACK_BI, 1)] : one
+  } },
   { id: 'bro', label: 'Body-part (bro) split', blurb: 'One muscle group a day: chest, back, shoulders, legs, arms. Best for intermediates with 5 days.', days: [5], build: () => [D('Chest', CHEST), D('Back', BACK), D('Shoulders', SHOULDERS), D('Legs', LOWER), D('Arms', ARMS)] },
   { id: 'arnold', label: 'Arnold split', blurb: 'Chest + back, shoulders + arms, legs, repeated twice. 6 days, high volume.', days: [6], build: () => [D('Chest + Back', CHEST_BACK), D('Shoulders + Arms', SHOULDERS_ARMS), D('Legs', LOWER), D('Chest + Back 2', CHEST_BACK, 1), D('Shoulders + Arms 2', SHOULDERS_ARMS, 1), D('Legs 2', LOWER, 1)] },
 ]

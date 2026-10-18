@@ -1,5 +1,8 @@
 import { db } from '../../lib/db'
 import type { Exercise, MuscleGroup } from '../../lib/types'
+import { ROWS as UPPER } from './exercises/upper'
+import { ROWS as LOWER } from './exercises/lower'
+import { ROWS as MORE } from './exercises/more'
 
 type Eq = Exercise['equipment']
 // [name, group, equipment, compound, lower, substitutes]
@@ -74,15 +77,20 @@ const ROWS: Row[] = [
   R('Russian Twist', 'core', 'bodyweight', false, false, ['Plank', 'Crunch']),
 ]
 
-export const SEED_EXERCISES: Exercise[] = ROWS.map(([name, muscle_group, equipment, is_compound, is_lower, substitutes]) => ({
+const names = new Set<string>()
+export const SEED_EXERCISES: Exercise[] = [...ROWS, ...UPPER, ...LOWER, ...MORE]
+  .filter((r) => !names.has(r[0].toLowerCase()) && !!names.add(r[0].toLowerCase()))
+  .map(([name, muscle_group, equipment, is_compound, is_lower, substitutes]) => ({
   name, muscle_group, equipment, is_compound, is_lower, substitutes,
 }))
 
 let seeding: Promise<void> | null = null
-/** Seeds the exercise library once, only when empty. */
+/** Seeds the exercise library, adding any built-in exercise whose name is not there yet (keeps ids of existing ones). */
 export function seedExercises(): Promise<void> {
   seeding ??= db.transaction('rw', db.exercises, async () => {
-    if ((await db.exercises.count()) === 0) await db.exercises.bulkAdd(SEED_EXERCISES)
+    const have = new Set((await db.exercises.toArray()).map((e) => e.name.toLowerCase()))
+    const missing = SEED_EXERCISES.filter((e) => !have.has(e.name.toLowerCase()))
+    if (missing.length) await db.exercises.bulkAdd(missing)
   }).catch(() => { seeding = null })
   return seeding
 }
